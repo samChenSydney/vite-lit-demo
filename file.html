@@ -1,0 +1,144 @@
+<table id="newContent" class="tb-mult tb-report"><thead id="tempThead" class="style-agent bg-none">
+             <tr class="tb-mult-topbar">
+                 <th colspan="16" class="lt">
+                     <div class="tit" id="title">VND</div>
+                     <a class="btnCMain-S" data-show="Expand all" data-hide="Hide All" onclick="DetailDirectReportHandler.expendAll(this)" href="javascript:void(0)">Expand All
+                     </a>
+                     <span class="pos-rt">
+                         <span class="txt-time" id="showSearchTime" style="display: none;">
+                    <i class="icon icon-clock"></i>
+                </span>
+                     </span>
+                 </th>
+             </tr>
+            </thead><thead id="tempVND" class="style-agent">
+             <tr>
+                 <th rowspan="2" class="site" style="display: none;">
+                     Site
+                 </th>
+                 <th class="lt show-level-tag" rowspan="2" width="10%">
+                     <span class="textLevelSec">AG</span>User ID
+                 </th>
+                 <th rowspan="2">
+                     <a data-type="validTurnover" class="btn-txt-switch" onclick="DetailDirectReportHandler.switchTurnover('validTurnover')" href="javascript:void(0);">Valid Turnover</a>
+                     <a data-type="grossComm" class="btn-txt-switch" onclick="DetailDirectReportHandler.switchTurnover('grossComm')" href="javascript:void(0);" style="display: none;">Gross Comm.</a>
+                 </th>
+                 <th data-type="activePlayer" rowspan="2" class="th-border-top">
+                     <a class="btn-close" href="javascript:void(0);" onclick="DetailDirectReportHandler.closeActive()">
+                         <i class="icon-close"></i>
+                     </a>
+                     <a data-type="betCountSW" style="display: none;" class="btn-txt-switch" onclick="DetailDirectReportHandler.switchBetCount('betCountSW')" href="javascript:void(0);">Valid Bet Count</a>
+                     <a data-type="activePlayerSW" class="btn-txt-switch" onclick="DetailDirectReportHandler.switchBetCount('activePlayerSW')" href="javascript:void(0);">Active Player</a>
+                 </th>
+                 <th data-type="member" class="ct Member" id="thMember" colspan="2">Member
+                 </th>
+                 
+                 <th data-type="downline" class="ct Agent collapse-box-line" colspan="2">
+                     Direct Downlines
+                     
+                 </th>
+                 <th data-type="allDownline" class="ct Agent collapse-box" id="thAllDownline" colspan="2" style="display: none;">
+                    All Level Downlines
+                 </th>
+                 <th data-type="self" data-title="selfTitle" class="ct MA" colspan="2">
+                    Self
+                 <span class="tb-mult-tag">one</span></th>
+                 <th data-type="company" rowspan="2" class="ct Company" style="display: none;">Company
+                 </th>
+             </tr>
+             <tr>
+                 <!--Member-->
+                 <th class="Member" data-type="member">Win/loss
+                 </th>
+                 <th class="Member" data-type="member">Comm.
+                 </th>
+
+                 <!--downline-->
+                 <th class="Agent" data-type="downline">PT Win/Loss
+                 </th>
+                 <th class="Agent" data-type="downline">Comm.
+                 </th>
+                 <!--self-->
+                 <th class="MA" data-type="self">PT Win/Loss
+                 </th>
+                 <th class="MA" data-type="self">Comm.
+                 </th>
+             </tr>
+            </thead><tbody id="tbodyAgent" class="style-agent"><tr id="tempTitle" class="trTitle" style="">
+                <td class="site" style="display: none;" id="webSite"></td>
+                <td class="setFlex-alignCenter">
+                    <a id="signplus" class="btnOpen" href="javascript:void(0)"></a>
+                    <a id="titleUseID" class="textBtn" href="/page/agent/report/winLossDirectReportDetail.jsp?userID=caerus&amp;webSiteType=2
+                &amp;startDate=10-02-2025&amp;endDate=11-02-2025
+                &amp;hoursTime=12:00:00&amp;isOutside=1&amp;isInternal=0
+                &amp;currency=VND&amp;hoursSetting=12:00:00">caerus</a>
+                </td>
+                <td class="txt-nowrap lt" data-type="loginName" style="display: none"></td>
+                <td data-type="validTurnover" id="userTotalPlTurnover">44.00</td>
+                <td data-type="grossComm" id="userTotalPlGrossComm" style="display: none">0.00</td>
+                <td data-type="activePlayer">
+                    <span style="display: none;" data-type="betCountSW" id="userTotalPlBetCount">8</span>
+                    <span data-type="activePlayerSW" id="userTotalActivePlayer">2</span>
+                </td>
+                <!--Member-->
+                <td data-type="member" id="userTotalPlWinloss"><span class="textRed">-22.55</span></td>
+                <td data-type="member" id="userTotalPlComm">0.00</td>
+                <!--downline-->
+                <td data-type="downline" id="userTotaldownlineWinloss">0.00</td>
+                <td data-type="downline" id="userTotaldownlineComm">0.00</td>
+                <!--self-->
+                <td data-type="self" id="userTotalselfWinloss">1.12</td>
+                <td data-type="self" id="userTotalselfComm">0.00</td>
+                <!--Company-->
+                <td data-type="company" id="userTotalCompany" class="" style="display: none;">0.00</td>
+            </tr><tr id="" class="trTotal-body caerus" style="display: none;">
+                <td class="site" style="display: none;"></td>
+                <td id="gameName" class="lt">Baccarat</td>
+                <td data-type="validTurnover" id="PlTurnover">44.00</td>
+                <td data-type="grossComm" id="PlGrossComm" style="display: none">0.00</td>
+                <td data-type="activePlayer">
+                    <span style="display: none;" data-type="betCountSW" id="PlBetCount">8</span>
+                    <span data-type="activePlayerSW" id="ActivePlayer">-</span>
+                </td>
+                <!--Member-->
+                <td data-type="member" id="PlWinloss" class=""><span class="textRed">-22.55</span></td>
+                <td data-type="member" id="PlComm">0.00</td>
+                <!--downline-->
+                <td data-type="downline" id="downlineWinloss">21.42</td>
+                <td data-type="downline" id="downlineComm">0.00</td>
+                <!--all downline-->
+                <td class="collapse-box" data-type="allDownline" id="allDownlineWinloss" style="display: none;">0.00</td>
+                <td class="collapse-box" data-type="allDownline" id="allDownlineComm" style="display: none;">0.00</td>
+                <!--self-->
+                <td data-type="self" id="selfWinloss" class="">1.12</td>
+                <td data-type="self" id="selfComm">0.00</td>
+                <!--Company-->
+                <td data-type="company" id="company" class="" style="display: none;">0.00</td>
+            </tr><tr id="tempTotal" style="" class="trTotal">
+                <td class="site" style="display: none;"></td>
+                <td id="totalAndCurrency" class="align-R">Total</td>
+                <td data-type="validTurnover" id="tPlturnover">44.00</td>
+                <td data-type="grossComm" id="tPlGrossComm" style="display: none">0.00</td>
+                <td data-type="activePlayer">
+                    <span style="display: none;" data-type="betCountSW" id="tPlBetCount">8</span>
+                    <span data-type="activePlayerSW" id="tActivePlayer">2</span>
+                </td>
+                <!--Member-->
+                <td data-type="member" id="tPWinloss" class=""><span class="textRed">-22.55</span></td>
+                <td data-type="member" id="tPComm">0.00</td>
+                <!--downline-->
+                <td data-type="downline" id="tdownlineWinloss">21.42</td>
+                <td data-type="downline" id="tdownlineComm">0.00</td>
+                <!--all downline-->
+                <td class="collapse-box" data-type="allDownline" id="tallDownlineWinloss" style="display: none;">21.42</td>
+                <td class="collapse-box" data-type="allDownline" id="tallDownlineComm" style="display: none;">0.00</td>
+                <!--self-->
+                <td data-type="self" id="tselfWinloss">1.12</td>
+                <td data-type="self" id="tselfComm">0.00</td>
+                <!--Company-->
+                <td data-type="company" id="tCompany" class="" style="display: none;">0.00</td>
+            </tr></tbody><thead id="tfoot" class="style-empty">
+             <tr>
+                 <td colspan="16"></td>
+             </tr>
+            </thead></table>
