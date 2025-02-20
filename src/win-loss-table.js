@@ -34,6 +34,11 @@ export class WinLossTable extends LitElement {
 		this.hideAllText = "Hide All";
 		this.switchableGroups = {};
 		this.transferredList=[];
+		/**
+		 *
+		 * @type {TransformedWinLossData}
+		 */
+		this.data=[];
 		this.isHideAll = true;
 	}
 	willUpdate(_changedProperties) {
@@ -48,41 +53,19 @@ export class WinLossTable extends LitElement {
 					});
 				}
 			});
-		}else if(_changedProperties.has("data")){
-			let result = [];
-			let data = this.data;
-			for (const currencyKey in data) {
-				const currencyData = data[currencyKey]; // 获取 currency 下的 sh 列表
-				let currencyTotal = 0; // 当前 currency 的总和
-
-				for (const sh of currencyData) {
-					let shTotal = 0; // 计算当前 sh 下所有 game 的总和
-
-					// 插入 sh 分组行
-					result.push({ type: "shHeader", key: sh.key, sum: 0 });
-
-					for (const game of sh.data) {
-						// 计算当前 game 的总和
-						const gameTotal = game.data.reduce((sum, txn) => sum + txn.amount, 0);
-						shTotal += gameTotal;
-						result.push({ type: "game", key: game.key, sum: gameTotal });
-					}
-
-					// 更新 sh 总计，并修改 shHeader 里对应的 sum 值
-					result[result.length - sh.data.length - 1].sum = shTotal;
-					currencyTotal += shTotal;
-				}
-
-				// 插入 currency 统计行
-				result.push({ type: "currencyHeader", key: currencyKey, sum: currencyTotal });
-				currencySum += currencyTotal;
-			}
 		}
 	}
 
 	render() {
 		return html`
 			<table id="newContent" class="tb-mult tb-report">
+				${this.data.map((item)=>{
+					return html`
+						<tr>
+							${this.renderDataColumns(item)}
+						</tr>
+					`
+				})}
 				${this.renderThead1()}
 				${this.renderThead2()}
 				
@@ -90,13 +73,24 @@ export class WinLossTable extends LitElement {
 		`
 	}
 
-	renderThead1() {
+	/**
+	 *
+	 * @param {Level1Data} level1Data
+	 */
+	renderSection(level1Data){
+		return html`
+			${this.renderThead1(level1Data.key)}
+			${this.renderThead2()}
+			${this.renderTbody()}
+		`
+	}
+	renderThead1(level1Key) {
 		const classes = Object.assign(this.getAgentOrPlayerClasses(), {"bg-none": true})
 		return html`
 			<thead class=${classMap(classes)}>
 			<tr class="tb-mult-topbar">
 				<th colspan="16" class="lt">
-					<div class="tit" id="title">${this.currency}</div>
+					<div class="tit" id="title">${level1Key}</div>
 					<a class="btnCMain-S" href="javascript:void(0)">${this.hideAllText}
 					</a>
 					<span class="pos-rt">
@@ -152,43 +146,14 @@ export class WinLossTable extends LitElement {
 			</thead>`
 	}
 
-	renderTBody() {
+	/**
+	 *
+	 * @param {Level1Data} level1Data
+	 */
+	renderTBody(level1Data) {
 		return html`
 			<tbody class="${classMap(this.getAgentOrPlayerClasses())}">
-			<tr class="trTitle pg-level-1" style="">
-				
-			</tr>
-			<tr class="trTotal-body caerus pg-level-2" style="display: none;">
-				<td class="site" style="display: none;"></td>
-				<td id="gameName" class="lt">Baccarat</td>
-				${this.renderSwitchableTd([{
-					key: "validTurnover",
-					data: "44.00"
-				}, {
-					key: "grossComm",
-					data: "0.00"
-				}])}
-				${this.renderSwitchableTd([{
-					key: "betCountSW",
-					data: "8"
-				},
-					{
-						key: "activePlayerSW",
-						data: "2"
-					}
-				])}
-				<!--Member-->
-				<td data-type="member" id="PlWinloss" class=""><span class="textRed">-22.55</span></td>
-				<td data-type="member" id="PlComm">0.00</td>
-				<!--downline-->
-				<td data-type="downline" id="downlineWinloss">21.42</td>
-				<td data-type="downline" id="downlineComm">0.00</td>
-				<!--self-->
-				<td data-type="self" id="selfWinloss" class="">1.12</td>
-				<td data-type="self" id="selfComm">0.00</td>
-				<!--Company-->
-				<td data-type="company" id="company" class="" style="display: none;">0.00</td>
-			</tr>
+			
 			<tr style="" class="trTotal pg-total">
 				<td class="site" style="display: none;"></td>
 				<td id="totalAndCurrency" class="align-R">Total</td>
@@ -224,6 +189,28 @@ export class WinLossTable extends LitElement {
 		`;
 	}
 
+	/**
+	 *
+	 * @param {Level2Data} level2Data
+	 */
+	renderLevel2Data(level2Data){
+		return html`
+			${level2Data.data.map((level3Data) => {
+				
+			})}
+		`
+	}
+
+	/**
+	 *
+	 * @param {Level3Data} level3Data
+	 */
+	renderLevel3Data(level3Data){
+		return html`
+			${level3Data.data.map((data) => {
+				})}
+		`
+	}
 	/**
 	 *
 	 * @param {Record<string,number>}data

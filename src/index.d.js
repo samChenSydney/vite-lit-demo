@@ -20,7 +20,7 @@
  *
  * @typedef {Object} Level3Data
  * @property {string} key - The game name or identifier.
- * @property {Array<Object>} data - The list of entries under this game.
+ * @property {Array<WinLossEntry>} data - The list of entries under this game.
  *
  * @typedef {Object} Level2Data
  * @property {string} key - The parent user ID or secondary key.
