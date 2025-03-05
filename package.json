@@ -10,7 +10,10 @@
   },
   "dependencies": {
     "@doubletrade/lit-datatable": "^2.0.0",
-    "lit": "^3.2.1"
+    "@doubletrade/lit-datepicker": "^1.0.0",
+    "date-fns": "^4.1.0",
+    "lit": "^3.2.1",
+    "pikaday": "^1.8.2"
   },
   "devDependencies": {
     "vite": "^6.1.0"

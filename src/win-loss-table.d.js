@@ -23,8 +23,8 @@
  */
 
 /**
- * @typedef {Object} UserIdColumn
- * @property {"userId"} type
+ * @typedef {Object} MainColumn
+ * @property {"main"} type
  * @property {KeyAndTextObject} data
  */
 

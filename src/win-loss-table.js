@@ -1,5 +1,5 @@
-import {css, html, LitElement} from 'lit'
-import {classMap} from 'lit/directives/class-map.js';
+import {html, LitElement} from 'lit'
+import {styleMap} from 'lit/directives/style-map.js';
 
 /**
  * An example element.
@@ -10,47 +10,50 @@ import {classMap} from 'lit/directives/class-map.js';
 export class WinLossTable extends LitElement {
 	static get properties() {
 		return {
-			currency: {},
-			isOne: {type: Boolean},
-			searchAccount:{},
-			columns: {type: Array},
-			data:{type:Object},
+			columns: {state: true},
+			data: {state: true},
 			switchableGroups: {state: true},
-			isHideAll: {state: true},
-			transferredList:{state:true}
+			isExpandAll: {state: true},
+			expandedState: {state: true},
 		}
+	}
+
+	createRenderRoot() {
+		return this;
 	}
 
 	constructor() {
 		super()
-		this.isOne = false;
-		this.currency = "";
-		this.searchingAccount = "agent"; //或player
 		/**
 		 * @type {TableColumnDefinition[]}
 		 */
 		this.columns = [];
 		this.expandAllText = "Expand All";
 		this.hideAllText = "Hide All";
-		this.switchableGroups = {};
-		this.transferredList=[];
+		/**
+		 *
+		 * @type {Map<string, boolean[]>}
+		 */
+		this.switchableGroups = new Map();
 		/**
 		 *
 		 * @type {TransformedWinLossData}
 		 */
-		this.data=[];
-		this.isHideAll = true;
+		this.data = [];
+		this.isExpandAll = false;
+		this.expandedState = new Map();
 	}
+
 	willUpdate(_changedProperties) {
 		super.willUpdate(_changedProperties);
 		if (_changedProperties.has("columns")) {
 			let switchableColumns = this.columns.filter(columnDefinition => columnDefinition.type === "switchable");
 			switchableColumns.forEach(switchableColumn => {
 				let groupKey = switchableColumn.data.map(switchableThData => switchableThData.key).join('-');
-				if (this.switchableGroups[groupKey] === undefined) {
-					this.switchableGroups[groupKey] = switchableColumn.data.map((_, index) => {
+				if (!this.switchableGroups.has(groupKey)) {
+					this.switchableGroups.set(groupKey, switchableColumn.data.map((_, index) => {
 						return index !== 0;
-					});
+					}));
 				}
 			});
 		}
@@ -59,16 +62,13 @@ export class WinLossTable extends LitElement {
 	render() {
 		return html`
 			<table id="newContent" class="tb-mult tb-report">
-				${this.data.map((item)=>{
+				${this.data.map((item, level1Index) => {
 					return html`
 						<tr>
-							${this.renderDataColumns(item)}
+							${this.renderSection(item, level1Index)}
 						</tr>
 					`
 				})}
-				${this.renderThead1()}
-				${this.renderThead2()}
-				
 			</table>
 		`
 	}
@@ -76,22 +76,39 @@ export class WinLossTable extends LitElement {
 	/**
 	 *
 	 * @param {Level1Data} level1Data
+	 * @param {number} level1Index
 	 */
-	renderSection(level1Data){
+	renderSection(level1Data, level1Index) {
 		return html`
 			${this.renderThead1(level1Data.key)}
 			${this.renderThead2()}
-			${this.renderTbody()}
+			${level1Data.data.length > 0 ? this.renderTBody(level1Data, level1Index) : this.renderNoData()}
+			${this.renderTFoot(level1Data)}
 		`
 	}
-	renderThead1(level1Key) {
-		const classes = Object.assign(this.getAgentOrPlayerClasses(), {"bg-none": true})
+
+	renderNoData() {
 		return html`
-			<thead class=${classMap(classes)}>
+			<tbody id="nodataBody">
+			<tr>
+				<td colspan="20" class="nodata-td">
+					<div class="nodata-box">
+						no data found
+					</div>
+				</td>
+			</tr>
+			</tbody>
+		`
+	}
+
+	renderThead1(level1Key) {
+		return html`
+			<thead class="bg-none">
 			<tr class="tb-mult-topbar">
 				<th colspan="16" class="lt">
 					<div class="tit" id="title">${level1Key}</div>
-					<a class="btnCMain-S" href="javascript:void(0)">${this.hideAllText}
+					<a class="btnCMain-S" href="javascript:void(0)"
+						@click="${() => this.toggleAll()}">${this.isExpandAll ? this.hideAllText : this.expandAllText}
 					</a>
 					<span class="pos-rt">
                          <span class="txt-time" id="showSearchTime" style="display: none;">
@@ -106,22 +123,19 @@ export class WinLossTable extends LitElement {
 
 	renderThead2() {
 		return html`
-			<thead class="${classMap(this.getAgentOrPlayerClasses())}">
+			<thead>
 			<tr>
 				${this.columns.map((columnDefinition) => {
 					switch (columnDefinition.type) {
-						case "userId":
+						case "main":
 							return html`
 								<th class="lt show-level-tag" rowspan="2" width="10%">
-									<span class="textLevelSec">${this.searchingAccount==="agent" ? "AG" : "PL"}</span>User ID
+									${columnDefinition.data.text}
 								</th>`
 						case "switchable":
 							return this.renderSwitchableTh(columnDefinition.data)
 						case "group":
 							let groupClassName = columnDefinition.data.parent.className;
-							if (this.isShouldHide(columnDefinition.data.showMode)) {
-								groupClassName += " hide"
-							}
 							return html`
 								<th class="${groupClassName}"
 									colspan="${columnDefinition.data.children.length}">
@@ -129,9 +143,10 @@ export class WinLossTable extends LitElement {
 								</th>
 							`
 						case "normal":
-							let normalClassName = columnDefinition.data.className+this.isShouldHide(columnDefinition.data.showMode) ? " hide" : "";
 							return html`
-								<th rowspan="2" class="${normalClassName}">${columnDefinition.data.text}</th>`
+								<th rowspan="2" class="${columnDefinition.data.className}">
+									${columnDefinition.data.text}
+								</th>`
 					}
 				})}
 			</tr>
@@ -149,89 +164,64 @@ export class WinLossTable extends LitElement {
 	/**
 	 *
 	 * @param {Level1Data} level1Data
+	 * @param {number} level1Index
 	 */
-	renderTBody(level1Data) {
+	renderTBody(level1Data, level1Index) {
 		return html`
-			<tbody class="${classMap(this.getAgentOrPlayerClasses())}">
-			
-			<tr style="" class="trTotal pg-total">
-				<td class="site" style="display: none;"></td>
-				<td id="totalAndCurrency" class="align-R">Total</td>
-				${this.renderSwitchableTd([{
-					key: "validTurnover",
-					data: "44.00"
-				}, {
-					key: "grossComm",
-					data: "0.00"
-				}])}
-				${this.renderSwitchableTd([{
-					key: "betCountSW",
-					data: "8"
-				},
-					{
-						key: "activePlayerSW",
-						data: "2"
-					}
-				])}
-				<!--Member-->
-				<td data-type="member" id="tPWinloss" class=""><span class="textRed">-22.55</span></td>
-				<td data-type="member" id="tPComm">0.00</td>
-				<!--downline-->
-				<td data-type="downline" id="tdownlineWinloss">21.42</td>
-				<td data-type="downline" id="tdownlineComm">0.00</td>
-				<!--self-->
-				<td data-type="self" id="tselfWinloss">1.12</td>
-				<td data-type="self" id="tselfComm">0.00</td>
-				<!--Company-->
-				<td data-type="company" id="tCompany" class="" style="display: none;">0.00</td>
+			<tbody>
+			${level1Data.data.map((level2Data, level2Index) => {
+				let rowKey = `${level1Index}-${level2Index}`;
+				if (!this.expandedState.has(rowKey)) {
+					this.expandedState.set(rowKey, false);
+				}
+				return html`
+					<tr class="trTitle">
+						${this.renderDataColumns(level2Data.sum, rowKey)}
+					</tr>
+					${level2Data.data.map((level3Data) => {
+						let styles = {
+							...(!this.expandedState.get(rowKey) && {
+								'display': 'none'
+							})
+						}
+						return html`
+							<tr class="trTotal-body" style=${styleMap(styles)}>
+								${this.renderDataColumns(level3Data)}
+							</tr>`
+					})}
+				`
+			})}
+			<tr class="trTotal">
+				${this.renderDataColumns(level1Data.sum)}
 			</tr>
 			</tbody>
 		`;
 	}
 
-	/**
-	 *
-	 * @param {Level2Data} level2Data
-	 */
-	renderLevel2Data(level2Data){
-		return html`
-			${level2Data.data.map((level3Data) => {
-				
-			})}
-		`
-	}
 
 	/**
 	 *
-	 * @param {Level3Data} level3Data
+	 * @param {WinLossEntry}data
+	 * @param {string?} rowKey
 	 */
-	renderLevel3Data(level3Data){
-		return html`
-			${level3Data.data.map((data) => {
-				})}
-		`
-	}
-	/**
-	 *
-	 * @param {Record<string,number>}data
-	 */
-	renderDataColumns(data) {
+	renderDataColumns(data, rowKey) {
 		return this.columns.map((column) => {
 			switch (column.type) {
-				case "userId":
+				case "main":
+					let isExpanded = this.expandedState.get(rowKey);
 					return html`
 						<td class="setFlex-alignCenter">
-							<a id="signplus" class="btnOpen" href="javascript:void(0)"></a>
-							<a id="titleUseID" class="textBtn">${data[column.data.key]}</a>
+							<a id="signplus" class="${isExpanded ? "btnClose" : "btnOpen"}"
+								@click="${() => this.toggleRow(rowKey)}" href="javascript:void(0)"></a>
+							<span>${data[column.data.key]}</span>
 						</td>`
 				case "switchable":
-					return this.renderSwitchableTd(column.data)
+					return this.renderSwitchableTd(column.data, data)
 				case "group":
-					let shouldHide = this.isShouldHide(column.data.showMode);
 					return html`
 						${column.data.children.map(child => {
 							return html`
-								<td class="${child.className}${shouldHide ? " hide" : ""}">${data[child.key]}</td>`
+								<td class="${child.className}">${data[child.key]}</td>`
 						})}`
 				case "normal":
 					return html`
@@ -242,21 +232,17 @@ export class WinLossTable extends LitElement {
 
 	renderSwitchableTh(switchableThDatas) {
 		let groupKey = switchableThDatas.map(switchableThData => switchableThData.key).join('-');
-		if (this.switchableGroups[groupKey] === undefined) {
-			//返回一个数组，数组第一个元素是false，其他元素都是true，表示是否hide
-			this.switchableGroups[groupKey] = switchableThDatas.map((_, index) => {
-				return index !== 0;
-			});
-		}
 		return html`
 			<th rowspan=${switchableThDatas.length}>
 				${switchableThDatas.map(((switchableThData, index) => {
-					const classes = {
-						'hide': this.switchableGroups[groupKey][index],
-						'btn-txt-switch': true
+					let styles = {
+						...(this.switchableGroups.get(groupKey)[index] && {
+							'display': 'none'
+						})
 					}
 					return html`
-						<a data-type="${switchableThData.key}" class=${classMap(classes)}
+						<a data-type="${switchableThData.key}" class='btn-txt-switch'
+							style=${styleMap(styles)}
 							@click="${() => this.switchTh(groupKey, index)}"
 							href="javascript:void(0);">${switchableThData.text}</a>`
 				}))}
@@ -266,55 +252,55 @@ export class WinLossTable extends LitElement {
 
 	switchTh(groupKey, index) {
 		let newShownIndex = index + 1;
-		this.switchableGroups[groupKey] = this.switchableGroups[groupKey].map((_, i) => {
-			return i !== newShownIndex % this.switchableGroups[groupKey].length;
-		});
+		this.switchableGroups.set(groupKey, this.switchableGroups.get(groupKey).map((_, i) => {
+			return i !== newShownIndex % this.switchableGroups.get(groupKey).length;
+		}));
 		this.requestUpdate();
 	}
 
-	renderSwitchableTd(switchableTdDatas) {
+	renderSwitchableTd(switchableTdDatas, level3Data) {
 		const groupKey = switchableTdDatas.map(switchableTdData => switchableTdData.key).join('-');
 		return html`
 			<td>
 				${switchableTdDatas.map((switchableTdData, index) => {
-					const classes = {
-						'hide': this.switchableGroups[groupKey][index]
+					let styles = {
+						...(this.switchableGroups.get(groupKey)[index] && {
+							'display': 'none'
+						})
 					}
 					return html`
 						<span data-type="${switchableTdData.key}"
-							class=${classMap(classes)}>${switchableTdData.data}</span>`
+							style=${styleMap(styles)}>${level3Data[switchableTdData.key]}</span>`
 				})}
 			</td>
 		`;
 	}
 
-	renderTFoot() {
+	/**
+	 *
+	 * @param {Level1Data}level1Data
+	 */
+	renderTFoot(level1Data) {
 		return html`
 			<thead class="style-empty">
+			<tr>
+				<td colspan="${level1Data.sum.length}"></td>
+
+			</tr>
 			</thead>`
 	}
 
-	getAgentOrPlayerClasses() {
-		return {
-			"style-agent": this.isOne,
-			"style-player": !this.isOne,
-		};
+	toggleRow(rowKey) {
+		this.expandedState.set(rowKey, !this.expandedState.get(rowKey));
+		this.requestUpdate()
 	}
 
-	/**
-	 *
-	 * @param {ShowMode} showMode
-	 * @return {boolean}
-	 */
-	isShouldHide(showMode){
-		return (showMode === "ONLY_ONE" && !this.isOne) || (showMode === "ONLY_NOT_ONE" && this.isOne);
-	}
-	static get styles() {
-		return css`
-          .hide {
-            display: none;
-          }
-		`
+	toggleAll() {
+		this.isExpandAll = !this.isExpandAll;
+		this.expandedState.forEach((value, key) => {
+			this.expandedState.set(key, this.isExpandAll);
+		});
+		this.requestUpdate()
 	}
 }
 

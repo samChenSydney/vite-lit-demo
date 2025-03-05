@@ -1,80 +1,68 @@
 import './win-loss-table.js';
 import '/data.js';
-
+import {transformData} from "./transformData.js";
+import './search-bar.js'
+import './casino-date-picker.js'
 console.log(window.demoData)
-
-/**
- * @param {Object} param
- * @param {WinLossResults} param.data
- * @param {string} param.level1KeyString
- * @param {string} param.level2KeyString
- * @param {string} param.level3KeyString
- * @return {TransformedWinLossData}
- */
-function transformData({ data, level1KeyString, level2KeyString, level3KeyString }) {
-	const result = [];
-
-	const level1Data = data[level1KeyString] || [];
-	const level2Data = data[level2KeyString] || [];
-	const level3Data = data[level3KeyString] || [];
-
-	// 使用 Map 结构加速查找
-	const level2Map = new Map();
-	const level3Map = new Map();
-
-	// 预处理 Level 2 数据，按 "level1Key-level2Key" 组织
-	for (const level2Item of level2Data) {
-		const level1Key = level2Item[level1KeyString];
-		const level2Key = level2Item[level2KeyString];
-		const mapKey = `${level1Key}-${level2Key}`;
-		if (!level2Map.has(mapKey)) {
-			level2Map.set(mapKey, { key: level2Key, data: [], sum: level2Item });
-		}
-	}
-
-	// 预处理 Level 3 数据，按 "level1Key-level2Key-level3Key" 组织
-	for (const level3Item of level3Data) {
-		const level1Key = level3Item[level1KeyString];
-		const level2Key = level3Item[level2KeyString];
-		const level3Key = level3Item[level3KeyString];
-		const mapKey = `${level1Key}-${level2Key}-${level3Key}`;
-
-		if (!level3Map.has(mapKey)) {
-			level3Map.set(mapKey, level3Item);
-		}
-
-		// 将 Level 3 数据归类到 Level 2 里
-		const parentKey = `${level1Key}-${level2Key}`;
-		if (level2Map.has(parentKey)) {
-			level2Map.get(parentKey).data.push(level3Item);
-		}
-	}
-
-	// 构建最终的结果
-	for (const level1Item of level1Data) {
-		const level1Key = level1Item[level1KeyString];
-		const level1Entry = {
-			key: level1Key,
-			data: [],
-			sum: level1Item
-		};
-
-		for (const [level2Key, level2Entry] of level2Map.entries()) {
-			if (level2Key.startsWith(level1Key + "-")) {
-				level1Entry.data.push(level2Entry);
-			}
-		}
-
-		result.push(level1Entry);
-	}
-
-	return result;
-}
-
-
+const level1KeyString = "currency";
+const level2KeyString = "tableCountry";
+const level3KeyString = "tableId";
 console.log(transformData({
-	data:window.demoData.winLossResults,
+	data: window.demoData.winLossResults,
+	level1KeyString,
+	level2KeyString,
+	level3KeyString
+}))
+let winLossTable = document.querySelector('win-loss-table');
+winLossTable.columns = [{
+	"type": "main",
+	"data": {"text": `${level2KeyString}/${level3KeyString}`, "key": "main"}
+}, {
+	"type": "normal",
+	"data": {"key": "turnover", "text": "Valid Turnover"}
+}, {
+	"type": "switchable",
+	"data": [{"key": "activePlayer", "text": "Active Player"}, {
+		"key": "betCount",
+		"text": "Valid Bet Count"
+	}]
+},
+	{
+	"type": "group",
+	"data": {
+		"parent": {"text": "Member", "className": "ct Member"},
+		"children": [{
+			"key": "playerWinLoss",
+			"text": "Win/loss",
+			"className": "Member"
+		}]
+	}
+},
+	{
+	"type": "group",
+	"data": {
+		"parent": {"text": "Direct Downlines", "className": "ct Agent collapse-box-line"},
+		"children": [{
+			"key": "shWinLoss",
+			"text": "PT Win/Loss",
+			"className": "Agent"
+		}]
+	}
+}, {
+	"type": "group",
+	"data": {
+		"parent": {"text": "Self", "className": "MA"},
+		"children": [{"key": "oneWinLoss", "text": "PT Win/Loss", "className": "MA"}]
+	}
+}
+// , {
+// 	"type": "normal",
+// 	"data": { "text": "Company", "key": "company", "className": "ct Company"}
+// }
+];
+winLossTable.data = transformData({
+	data: window.demoData.winLossResults,
 	level1KeyString: "currency",
 	level2KeyString: "tableCountry",
 	level3KeyString: "tableId"
-}))
+})
