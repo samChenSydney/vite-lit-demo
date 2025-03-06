@@ -13,7 +13,7 @@ export class WinLossTable extends LitElement {
 			columns: {state: true},
 			data: {state: true},
 			switchableGroups: {state: true},
-			isExpandAll: {state: true},
+			isExpandAllState: {state: true},
 			expandedState: {state: true},
 		}
 	}
@@ -40,7 +40,11 @@ export class WinLossTable extends LitElement {
 		 * @type {TransformedWinLossData}
 		 */
 		this.data = [];
-		this.isExpandAll = false;
+		this.isExpandAllState = new Map();
+		/**
+		 *
+		 * @type {Map<number, Map<number,Boolean>>}
+		 */
 		this.expandedState = new Map();
 	}
 
@@ -63,6 +67,12 @@ export class WinLossTable extends LitElement {
 		return html`
 			<table id="newContent" class="tb-mult tb-report">
 				${this.data.map((item, level1Index) => {
+					if(!this.expandedState.has(level1Index)){
+						this.expandedState.set(level1Index, new Map());
+					}
+					if(!this.isExpandAllState.has(level1Index)){
+						this.isExpandAllState.set(level1Index,false);
+					}
 					return html`
 						<tr>
 							${this.renderSection(item, level1Index)}
@@ -79,8 +89,9 @@ export class WinLossTable extends LitElement {
 	 * @param {number} level1Index
 	 */
 	renderSection(level1Data, level1Index) {
+
 		return html`
-			${this.renderThead1(level1Data.key)}
+			${this.renderThead1(level1Data.key,level1Index)}
 			${this.renderThead2()}
 			${level1Data.data.length > 0 ? this.renderTBody(level1Data, level1Index) : this.renderNoData()}
 			${this.renderTFoot(level1Data)}
@@ -101,14 +112,15 @@ export class WinLossTable extends LitElement {
 		`
 	}
 
-	renderThead1(level1Key) {
+	renderThead1(level1Key,level1Index) {
+		let isExpandAll = this.isExpandAllState.get(level1Index);
 		return html`
 			<thead class="bg-none">
 			<tr class="tb-mult-topbar">
 				<th colspan="16" class="lt">
 					<div class="tit" id="title">${level1Key}</div>
 					<a class="btnCMain-S" href="javascript:void(0)"
-						@click="${() => this.toggleAll()}">${this.isExpandAll ? this.hideAllText : this.expandAllText}
+						@click="${() => this.toggleAll(level1Index)}">${isExpandAll ? this.hideAllText : this.expandAllText}
 					</a>
 					<span class="pos-rt">
                          <span class="txt-time" id="showSearchTime" style="display: none;">
@@ -167,20 +179,20 @@ export class WinLossTable extends LitElement {
 	 * @param {number} level1Index
 	 */
 	renderTBody(level1Data, level1Index) {
+		let level2ExpandedState = this.expandedState.get(level1Index);
 		return html`
 			<tbody>
 			${level1Data.data.map((level2Data, level2Index) => {
-				let rowKey = `${level1Index}-${level2Index}`;
-				if (!this.expandedState.has(rowKey)) {
-					this.expandedState.set(rowKey, false);
+				if (!level2ExpandedState.has(level2Index)) {
+					level2ExpandedState.set(level2Index, false);
 				}
 				return html`
 					<tr class="trTitle">
-						${this.renderDataColumns(level2Data.sum, rowKey)}
+						${this.renderDataColumns(level2Data.sum, level1Index,level2Index)}
 					</tr>
 					${level2Data.data.map((level3Data) => {
 						let styles = {
-							...(!this.expandedState.get(rowKey) && {
+							...(!level2ExpandedState.get(level2Index) && {
 								'display': 'none'
 							})
 						}
@@ -202,17 +214,17 @@ export class WinLossTable extends LitElement {
 	/**
 	 *
 	 * @param {WinLossEntry}data
-	 * @param {string?} rowKey
+	 * @param {number?} level1Index
+	 * @param {number?} level2Index
 	 */
-	renderDataColumns(data, rowKey) {
+	renderDataColumns(data, level1Index,level2Index) {
 		return this.columns.map((column) => {
 			switch (column.type) {
 				case "main":
-					let isExpanded = this.expandedState.get(rowKey);
 					return html`
 						<td class="setFlex-alignCenter">
-							<a id="signplus" class="${isExpanded ? "btnClose" : "btnOpen"}"
-								@click="${() => this.toggleRow(rowKey)}" href="javascript:void(0)"></a>
+							${typeof level1Index=='number'?html`<a id="signplus" class="${this.expandedState.get(level1Index).get(level2Index) ? "btnClose" : "btnOpen"}"
+								@click="${() => this.toggleRow(level1Index,level2Index)}" href="javascript:void(0)"></a>`:null}
 							<span>${data[column.data.key]}</span>
 						</td>`
 				case "switchable":
@@ -290,15 +302,18 @@ export class WinLossTable extends LitElement {
 			</thead>`
 	}
 
-	toggleRow(rowKey) {
-		this.expandedState.set(rowKey, !this.expandedState.get(rowKey));
+	toggleRow(level1Index,level2Index) {
+		let level2ExpandedState = this.expandedState.get(level1Index);
+		level2ExpandedState.set(level2Index, !level2ExpandedState.get(level2Index));
 		this.requestUpdate()
 	}
 
-	toggleAll() {
-		this.isExpandAll = !this.isExpandAll;
-		this.expandedState.forEach((value, key) => {
-			this.expandedState.set(key, this.isExpandAll);
+	toggleAll(level1Index) {
+		this.isExpandAllState.set(level1Index, !this.isExpandAllState.get(level1Index));
+		let isExpandAll = this.isExpandAllState.get(level1Index);
+		let expandedState = this.expandedState.get(level1Index);
+		expandedState.forEach((value, key) => {
+			expandedState.set(key, isExpandAll);
 		});
 		this.requestUpdate()
 	}

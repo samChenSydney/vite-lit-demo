@@ -1,5 +1,5 @@
 import {html, LitElement} from "lit";
-
+import './flatpickr-datepicker.js'
 class SearchBar extends LitElement {
 	static properties = {
 		currencyList: {state: true},
@@ -55,33 +55,13 @@ class SearchBar extends LitElement {
 						</div>
 					</div>
 					<div class="form-edit w-auto">
-						<div class="form-group date-group">
-							<input type="date">
-							<input type="date">
-						</div>
+						<flatpickr-datepicker></flatpickr-datepicker>
 						<div class="form-group btn-group">
-							<a class="btn btn-primary" href="javascript:void(0)">
+							<a class="btn btn-primary" href="javascript:void(0)" @click="${()=>this.search()}">
 								Search
 							</a>
 							<div class="btn-group">
-								<a class="btn period" href="javascript:void(0)">
-									Today
-								</a>
-								<a class="btn period" href="javascript:void(0)">
-									Yesterday
-								</a>
-								<a class="btn period" href="javascript:void(0)">
-									This Week
-								</a>
-								<a class="btn period" href="javascript:void(0)">
-									Last Week
-								</a>
-								<a class="btn period" href="javascript:void(0)">
-									This Month
-								</a>
-								<a class="btn period" href="javascript:void(0)">
-									Last Month
-								</a>
+								${this.renderPeriodButtons()}
 							</div>
 						</div>
 					</div>
@@ -95,7 +75,27 @@ class SearchBar extends LitElement {
 			</div>
 		`
 	}
+	// **渲染日期范围按钮**
+	renderPeriodButtons() {
+		const periods = [
+			{ label: "Today", value: "today" },
+			{ label: "Yesterday", value: "yesterday" },
+			{ label: "This Week", value: "thisWeek" },
+			{ label: "Last Week", value: "lastWeek" },
+			{ label: "This Month", value: "thisMonth" },
+			{ label: "Last Month", value: "lastMonth" }
+		];
 
+		return periods.map(period => html`
+			<a class="btn period" href="javascript:void(0)" @click="${() => {this.setDateRangeAndSearch(period.value)}}">
+				${period.label}
+			</a>
+		`);
+	}
+	setDateRangeAndSearch(period){
+		this.querySelector("flatpickr-datepicker").setDateRange(period);
+		this.search();
+	}
 	renderCurrencyList() {
 		return html`
 			<ul class="sel-multbox-ul edit">
@@ -136,6 +136,30 @@ class SearchBar extends LitElement {
 				`)}
 			</ul>
 		`;
+	}
+	// **点击搜索时获取当前选中的值**
+	search() {
+		const isInternal = this.querySelector("#isInternal").value;
+		const hoursSetting = this.querySelector("#hoursSetting").value;
+
+		// 读取选中的 currency
+		const selectedCurrencies = Array.from(this.querySelectorAll('input[id^="currency-"]:checked'))
+			.map(input => input.id.replace("currency-", ""));
+
+		// 读取选中的 website
+		const selectedWebsites = Array.from(this.querySelectorAll('input[id^="website-"]:checked'))
+			.map(input => input.id.replace("website-", ""));
+		let dateQuery = this.querySelector("flatpickr-datepicker").getDate();
+		// 触发自定义事件，发送当前搜索条件
+		this.dispatchEvent(new CustomEvent("search", {
+			detail: {
+				isInternal,
+				hoursSetting,
+				selectedCurrencies,
+				selectedWebsites,
+				date: dateQuery
+			}
+		}));
 	}
 }
 customElements.define("search-bar", SearchBar);

@@ -12,6 +12,7 @@
     "@doubletrade/lit-datatable": "^2.0.0",
     "@doubletrade/lit-datepicker": "^1.0.0",
     "date-fns": "^4.1.0",
+    "flatpickr": "^4.6.13",
     "lit": "^3.2.1",
     "pikaday": "^1.8.2"
   },
